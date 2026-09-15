@@ -1,40 +1,39 @@
 # Current Task
 
-Task ID: ATC-0002
-Parent Task: ATC-0001
-Status: Complete
-Owner: Rickard
-Created: 2026-09-15
-Last updated: 2026-09-15
-Charter frozen at: 2026-09-15
-Completed: 2026-09-15
+Task ID:
+Parent Task: None
+Status: Draft
+Owner:
+Created:
+Last updated:
+Charter frozen at:
 
 ## Task Summary
 
-Implement the minimal Tauri base for the A008 desktop client.
+Describe why this bounded task is active now and its intended outcome.
 
-## Primary Deliverable
+## Task Charter
 
-A runnable Tauri application scaffold with a minimal frontend, Rust host, development configuration, and documented verification path.
+### Goal
 
-## Scope
+Define one primary outcome.
 
-- Establish the Tauri application and package structure in this repository.
-- Add the minimal frontend entry point and Tauri Rust host entry point.
-- Configure development and build commands using the repository's chosen toolchain.
-- Verify that the base launches or builds successfully in the available environment.
-- Keep the A008 source repository at `C:\code\a008` read-only.
+### Primary Deliverable
 
-## Out of Scope
+Name the concrete artifact or behavior.
 
-- A008 transport, authentication, or runtime integration.
-- Production UI design and feature workflows.
-- Packaging, signing, auto-update, or release automation.
-- Modifying `C:\code\a008`.
+### In Scope
 
-## Definition of Done
+- List work required for the deliverable.
 
-- The repository contains a coherent minimal Tauri base.
-- The frontend and Rust host entry points are connected through Tauri configuration.
-- The documented development/build verification command is available and run where environment support permits.
-- `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md`, and `docs/JOURNAL.md` reflect the observed result.
+### Out of Scope
+
+- List adjacent work that must not be absorbed.
+
+### Definition of Done
+
+- State objective completion conditions.
+
+### Minimum Verification Gates
+
+- [ ] Define checks that may be strengthened but not removed after Ready.

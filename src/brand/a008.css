@@ -1,0 +1,482 @@
+/* A008 shell primitives (ADR 0030, ADR 0038). Theme values live in themes.css.
+ * Existing token names alias the semantic model so unmigrated feature CSS
+ * follows the selected theme. workspace.css owns standalone composition. */
+
+:root {
+  color-scheme: dark;
+
+  --a008-bg: var(--a008-bg-app);
+  --a008-bg-raised: var(--a008-bg-sidebar);
+  --a008-panel: var(--a008-surface-2);
+  --a008-panel-quiet: var(--a008-surface-1);
+
+  --a008-fg: var(--a008-text-primary);
+  --a008-fg-soft: var(--a008-text-secondary);
+  --a008-muted: var(--a008-text-muted);
+  --a008-dim: var(--a008-text-disabled);
+
+  --a008-border: var(--a008-border-subtle);
+  --a008-border-strong: var(--a008-border-default);
+
+  --a008-good: var(--a008-success);
+
+  --a008-idle: var(--a008-text-disabled);
+  --a008-connecting: var(--a008-accent);
+  --a008-ready: var(--a008-success);
+  --a008-error: var(--a008-danger);
+
+  --a008-cyan: var(--a008-accent);
+  --a008-cyan-dim: var(--a008-border-active);
+  --a008-gold: var(--a008-accent);
+  --a008-header-bg: var(--a008-surface-2);
+
+  --a008-sans: "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --a008-mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--a008-bg);
+  color: var(--a008-fg);
+}
+
+/*
+ * Base shell constraints; workspace.css supplies the ADR 0030 composition.
+ *
+ * `height`, never `min-height`: a minimum is a floor and lets the row grow to
+ * its content, which is what put a 2605px transcript inside a 720px viewport
+ * before A008-0048. Every track is minmax(0, ...) and every zone sets its own
+ * min-size and overflow, so a long pane scrolls inside itself instead of
+ * pushing the window.
+ */
+.a008-app {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns:
+    minmax(0, 15rem)
+    minmax(0, 1fr)
+    minmax(0, 28rem);
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--a008-sans);
+  color: var(--a008-fg);
+  background-color: var(--a008-bg);
+  background-image:
+    linear-gradient(var(--a008-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--a008-grid) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+
+/* Identity left, workspace tabs centre, runtime status right. */
+.a008-header {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  padding: 0.55rem 1rem;
+  background: var(--a008-panel);
+  border-bottom: 1px solid var(--a008-border);
+}
+
+.a008-header-status {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--a008-muted);
+}
+
+.a008-rail {
+  grid-column: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: var(--a008-bg-raised);
+  border-right: 1px solid var(--a008-border);
+}
+
+.a008-header-tabs { display: flex; gap: .3rem; }
+.a008-header-tabs button { padding: .5rem .9rem; border: 1px solid transparent; border-radius: 4px; color: var(--a008-muted); background: transparent; font: inherit; font-size: .78rem; cursor: pointer; }
+.a008-header-tabs button[aria-current] { color: var(--a008-accent); background: var(--a008-accent-soft); border-color: var(--a008-border); }
+.a008-header-tabs button:focus-visible { outline: 2px solid var(--a008-focus-ring); outline-offset: 2px; }
+.a008-main[hidden], .a008-memory-main[hidden], .a008-memory-workspace .a008-workbench { display: none; }
+.a008-memory-main { grid-column: 2 / -1; min-width: 0; min-height: 0; overflow: hidden; }
+@media (max-width: 850px) {
+  .a008-memory-workspace { grid-template-columns: minmax(0, 1fr); }
+  .a008-memory-workspace .a008-rail { display: none; }
+  .a008-memory-workspace .a008-memory-main { grid-column: 1; }
+  .a008-memory-workspace .a008-header { gap: .4rem; padding-inline: .65rem; }
+  .a008-memory-workspace .a008-brand-tagline { display: none; }
+  .a008-memory-workspace .a008-header-status { font-size: .52rem; letter-spacing: .02em; }
+}
+
+/* The conversation. The tallest thing on screen, which is the entire point. */
+.a008-main {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--a008-bg) 88%, transparent);
+}
+
+.a008-workbench {
+  grid-column: 3;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--a008-panel-quiet);
+  border-left: 1px solid var(--a008-border);
+}
+
+.a008-workbench-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.15rem;
+  padding: 0.4rem 0.5rem 0;
+  border-bottom: 1px solid var(--a008-border);
+}
+
+.a008-workbench-tab {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 0.25rem 0.25rem 0 0;
+  background: transparent;
+  color: var(--a008-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.a008-workbench-tab:hover,
+.a008-workbench-tab:focus-visible {
+  color: var(--a008-fg-soft);
+  outline: none;
+}
+
+.a008-workbench-tab[aria-selected="true"] {
+  border-color: var(--a008-border);
+  background: var(--a008-panel);
+  color: var(--a008-accent);
+}
+
+/*
+ * One pane is visible at a time, so an unused surface costs no height. That is
+ * what gives the conversation its room back.
+ */
+.a008-workbench-pane {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.a008-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--a008-cyan);
+}
+
+.a008-brand-mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.a008-brand-copy {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.a008-brand-name {
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.a008-brand-tagline {
+  margin-top: 0.12rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--a008-muted);
+}
+
+/*
+ * Pane chrome. The old stacking rules are gone: chat, composer, terminal and
+ * upload no longer share one column, so none of them competes for height.
+ */
+.a008-chat,
+.a008-composer {
+  padding: 0.75rem 1rem;
+  color: var(--a008-muted);
+}
+
+.a008-chat {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.a008-composer {
+  flex: 0 0 auto;
+  border-top: 1px solid var(--a008-border);
+}
+
+/* Mounted inside a workbench pane, which already owns scrolling. */
+.a008-terminal,
+.a008-upload {
+  padding: 0.75rem 1rem;
+  color: var(--a008-muted);
+}
+
+/*
+ * Form rows for panes the shell hosts.
+ *
+ * These modules render their own markup and are owned by other tasks under
+ * ADR 0019 D7. Their layout used to come from the stacked-column rules this
+ * task removed, so the shell supplies it here rather than reaching into a
+ * module it does not own.
+ */
+.a008-composer-form,
+.a008-terminal-form,
+.a008-upload-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.a008-composer-label,
+.a008-terminal-form label {
+  flex: 0 0 auto;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--a008-muted);
+}
+
+.a008-composer-input,
+.a008-terminal-form input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--a008-border);
+  border-radius: 0.25rem;
+  background: var(--a008-panel-quiet);
+  color: var(--a008-fg);
+  font: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+.a008-composer-input {
+  min-height: 2.6rem;
+  font-family: var(--a008-sans);
+}
+
+.a008-composer-input:focus-visible,
+.a008-terminal-form input:focus-visible {
+  border-color: var(--a008-accent);
+  outline: none;
+}
+
+.a008-composer-send,
+.a008-terminal-form button,
+.a008-upload-form button {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--a008-border-strong);
+  border-radius: 0.25rem;
+  background: var(--a008-accent-soft);
+  color: var(--a008-accent);
+  font: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.a008-composer-send:hover,
+.a008-terminal-form button:hover,
+.a008-upload-form button:hover {
+  background: color-mix(in srgb, var(--a008-accent) 16%, transparent);
+}
+
+.a008-composer-send:disabled,
+.a008-terminal-form button:disabled {
+  color: var(--a008-dim);
+  cursor: default;
+  background: transparent;
+}
+
+.a008-composer-error,
+.a008-composer-notice {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  font-family: var(--a008-mono);
+  overflow-wrap: anywhere;
+}
+
+.a008-composer-error {
+  color: var(--a008-danger);
+}
+
+.a008-composer-notice {
+  white-space: pre-wrap;
+  color: var(--a008-muted);
+}
+
+.a008-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.85rem 0.8rem 1rem;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.a008-settings-title {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--a008-cyan);
+}
+
+.a008-settings-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.a008-settings-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.a008-settings-row dt {
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--a008-muted);
+}
+
+.a008-settings-row dd {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  font-family: var(--a008-mono);
+  color: var(--a008-fg);
+}
+
+.a008-settings-row[data-field="product"] dd {
+  font-family: var(--a008-sans);
+  font-weight: 650;
+  letter-spacing: 0.16em;
+  color: var(--a008-cyan);
+}
+
+.a008-settings-row[data-field="memory"] dd {
+  color: var(--a008-gold);
+}
+
+.a008-settings-row[data-field="telemetry"] dd,
+.a008-settings-row[data-field="credentials"] dd {
+  color: var(--a008-muted);
+}
+
+.a008-connection {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.a008-connection-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0.45rem currentColor;
+}
+
+.a008-connection-idle {
+  color: var(--a008-idle);
+}
+
+.a008-connection-connecting {
+  color: var(--a008-connecting);
+}
+
+.a008-connection-ready {
+  color: var(--a008-ready);
+}
+
+.a008-connection-error {
+  color: var(--a008-error);
+}
+
+.a008-settings-error {
+  margin: 0;
+  padding: 0.45rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--a008-danger) 45%, var(--a008-border));
+  border-radius: 0.25rem;
+  color: var(--a008-danger);
+  font-size: 0.75rem;
+  font-family: var(--a008-mono);
+  overflow-wrap: anywhere;
+}
+
+.a008-settings-connect {
+  align-self: stretch;
+  margin-top: auto;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--a008-cyan-dim);
+  border-radius: 0.25rem;
+  background: transparent;
+  color: var(--a008-cyan);
+  font: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.a008-settings-connect:hover,
+.a008-settings-connect:focus-visible {
+  background: color-mix(in srgb, var(--a008-cyan) 12%, transparent);
+  outline: none;
+}
+
+.a008-tool-activity { flex: 0 1 auto; max-height: 30vh; overflow: auto; padding: .5rem 1rem; }
+.a008-tool-activity pre, .a008-tool-permission pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.a008-tool-permission { width: min(44rem, 90vw); max-height: 85vh; overflow: auto; background: var(--a008-surface-2); color: var(--a008-text-primary); border: 1px solid var(--a008-border-default); padding: 1.5rem; }
+.a008-tool-permission::backdrop { background: var(--a008-overlay); }
+.a008-tool-permission footer { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: flex-end; }

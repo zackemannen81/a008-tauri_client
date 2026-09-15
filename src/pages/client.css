@@ -1,0 +1,168 @@
+.a008-main > .a008-connect {
+  margin: auto;
+  width: min(100%, 40rem);
+}
+
+.a008-connect,
+.a008-unavailable,
+.a008-help,
+.a008-projects {
+  min-height: 0;
+  overflow: auto;
+  padding: 1.25rem 1.5rem 2rem;
+  max-width: 48rem;
+}
+
+.a008-connect h1,
+.a008-unavailable h1,
+.a008-help h1,
+.a008-projects h1 {
+  margin: 0.2rem 0 0.75rem;
+  font-size: 1.35rem;
+}
+
+.a008-connect > header p,
+.a008-unavailable > header p,
+.a008-help > header p,
+.a008-projects > header p {
+  margin: 0;
+  color: var(--a008-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.a008-connect-form,
+.a008-unavailable,
+.a008-help {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.a008-connect-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+}
+
+.a008-connect-form input,
+.a008-connect-form select {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--a008-border);
+  border-radius: 0.45rem;
+  background: var(--a008-surface-1, var(--a008-panel-quiet));
+  color: inherit;
+  font: inherit;
+}
+
+.a008-connect-form button,
+.a008-unavailable button,
+.a008-projects button {
+  padding: 0.5rem 0.85rem;
+  border: 1px solid var(--a008-border-strong);
+  border-radius: 0.5rem;
+  background: var(--a008-accent);
+  color: var(--a008-on-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.a008-connect-form button[type="button"],
+.a008-projects button[data-kind="secondary"] {
+  background: var(--a008-panel);
+  color: var(--a008-fg-soft);
+}
+
+.a008-note,
+.a008-help p,
+.a008-unavailable p {
+  color: var(--a008-muted);
+  line-height: 1.55;
+  font-size: 0.9rem;
+}
+
+.a008-help ul,
+.a008-unavailable ul,
+.a008-projects ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--a008-fg-soft);
+  line-height: 1.55;
+}
+
+.a008-help kbd {
+  font: 0.72rem var(--a008-mono, monospace);
+  border: 1px solid var(--a008-border-strong);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+}
+
+.a008-project-picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.a008-project-picker legend {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+}
+
+.a008-project-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.a008-project-list-scroll {
+  max-height: min(18rem, 42vh);
+  overflow: auto;
+  padding-right: 0.2rem;
+}
+
+.a008-project-list button[aria-selected="true"] {
+  border-color: var(--a008-border-active, var(--a008-border-strong));
+  background: var(--a008-surface-selected, var(--a008-accent-soft));
+}
+
+.a008-project-list button {
+  width: 100%;
+  text-align: left;
+  background: var(--a008-panel);
+  color: inherit;
+}
+
+.a008-project-list span {
+  display: block;
+  color: var(--a008-muted);
+  font-size: 0.72rem;
+}
+
+.a008-capability {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--a008-border);
+  border-radius: 0.75rem;
+  background: var(--a008-panel);
+}
+
+.a008-capability strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.a008-tools-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.a008-composer-notice {
+  margin: 0.5rem auto 0;
+  max-width: 50rem;
+  white-space: pre-wrap;
+  color: var(--a008-muted);
+  font: 0.78rem/1.45 var(--a008-mono, monospace);
+}

@@ -1,1 +1,1 @@
-{}
+{"default":{"identifier":"default","description":"Main window may call the loopback A008 HTTP proxy.","local":true,"windows":["main"],"permissions":["core:default"]}}
