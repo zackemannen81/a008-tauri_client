@@ -3,12 +3,14 @@
 ## Repository Root
 
 - `AGENTS.md` — repository entry point and docs-first requirements.
-- `src/` — client source code.
-- `gui/` — GUI-related assets or implementation.
-- `packages/` — package-level modules.
-- `scripts/` — development and maintenance scripts.
-- `test/` — tests.
-- `dist/` — generated distribution output; not authoritative source.
+- `package.json` — npm scripts and frontend development dependencies.
+- `package-lock.json` — locked npm dependency graph.
+- `.gitignore` — excludes generated dependencies and build output.
+- `index.html` — frontend entry document.
+- `src/` — frontend source code.
+- `vite.config.js` — frontend development/build configuration.
+- `src-tauri/` — Tauri manifest and Rust host application.
+- `README.md` — local setup and verification commands.
 - `docs/` — docs-first control plane.
 
 ## Control Plane

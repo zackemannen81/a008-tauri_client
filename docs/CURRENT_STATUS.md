@@ -11,7 +11,7 @@ Reality as of 2026-09-15. This document records observed state, not intended arc
 
 ## Current Work
 
-`ATC-0001` is establishing the project brief, repository boundary, and continuity protocol.
+`ATC-0002` is complete. The base frontend build passed with `npm run frontend:build`.
 
 ## Not Yet Established
 

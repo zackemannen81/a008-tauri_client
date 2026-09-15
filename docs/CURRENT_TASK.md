@@ -1,35 +1,40 @@
 # Current Task
 
-Task ID: ATC-0001
-Parent Task: None
-Status: In Progress
+Task ID: ATC-0002
+Parent Task: ATC-0001
+Status: Complete
 Owner: Rickard
 Created: 2026-09-15
 Last updated: 2026-09-15
 Charter frozen at: 2026-09-15
+Completed: 2026-09-15
 
 ## Task Summary
 
-Bootstrap the A008 Tauri client repository and establish its docs-first continuity protocol before feature development.
+Implement the minimal Tauri base for the A008 desktop client.
 
 ## Primary Deliverable
 
-A working client repository with authoritative project documentation, a clear boundary to the read-only A008 source repository, and a repeatable task/status/journal workflow.
+A runnable Tauri application scaffold with a minimal frontend, Rust host, development configuration, and documented verification path.
 
 ## Scope
 
-- Document the product purpose and repository roles.
-- Record the current repository state and integration boundary.
-- Establish the task register and continuity update rules.
+- Establish the Tauri application and package structure in this repository.
+- Add the minimal frontend entry point and Tauri Rust host entry point.
+- Configure development and build commands using the repository's chosen toolchain.
+- Verify that the base launches or builds successfully in the available environment.
+- Keep the A008 source repository at `C:\code\a008` read-only.
 
 ## Out of Scope
 
-- Implementing the Tauri client UI or host integration.
+- A008 transport, authentication, or runtime integration.
+- Production UI design and feature workflows.
+- Packaging, signing, auto-update, or release automation.
 - Modifying `C:\code\a008`.
-- Treating generated artifacts or the source repository as client-repository control-plane documents.
 
 ## Definition of Done
 
-- The docs-first control-plane files describe the client project and source boundary.
-- `ATC-0001` is registered.
-- The workflow explains which documents must be updated as work progresses.
+- The repository contains a coherent minimal Tauri base.
+- The frontend and Rust host entry points are connected through Tauri configuration.
+- The documented development/build verification command is available and run where environment support permits.
+- `docs/CURRENT_STATUS.md`, `docs/SYSTEMDOC.md`, and `docs/JOURNAL.md` reflect the observed result.

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "A008 Client",
+  "version": "0.1.0",
+  "identifier": "com.a008.client",
+  "build": {
+    "beforeDevCommand": "npm run frontend:dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run frontend:build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "A008 Client",
+        "width": 960,
+        "height": 640,
+        "minWidth": 640,
+        "minHeight": 420,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}

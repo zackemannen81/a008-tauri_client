@@ -1,0 +1,20 @@
+[package]
+name = "a008-tauri-client"
+version = "0.1.0"
+description = "Desktop client for A008"
+authors = ["A008 contributors"]
+edition = "2021"
+
+[lib]
+name = "a008_tauri_client_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.0.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0.0", features = [] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
