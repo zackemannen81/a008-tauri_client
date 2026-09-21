@@ -8,6 +8,7 @@ export const V2_ID_PATTERN = /^[A-Za-z0-9_-]{1,160}$/u;
 
 export const V2_SESSION_ACTIONS = [
   "session/new",
+  "session/resume",
   "session/inspect",
   "session/prompt",
   "session/cancel",
@@ -24,6 +25,9 @@ export interface V2Limits {
   readonly inputFrameBytes: number;
   readonly outputFrameBytes: number;
   readonly promptBytes: number;
+  readonly sessionResumeLeaseMs?: number;
+  readonly commandReceiptRetentionMs?: number;
+  readonly commandReceiptLimitPerPrincipal?: number;
 }
 
 export interface V2Info {
@@ -76,6 +80,32 @@ export interface SessionTool {
   readonly description: string;
 }
 
+export interface RuntimePreferences {
+  readonly instructions: string;
+  readonly budgets: Readonly<Record<string, number>>;
+  readonly semantic?: {
+    readonly model: string;
+    readonly reasoningEffort: string | null;
+  };
+}
+
+export interface RuntimeBudgetField {
+  readonly key: string;
+  readonly label: string;
+  readonly unit: string;
+  readonly description: string;
+  readonly minimum: number;
+  readonly maximum: number;
+}
+
+export interface RuntimePreferencesSnapshot {
+  readonly revision: string;
+  readonly settings: RuntimePreferences;
+  readonly defaults: RuntimePreferences;
+  readonly fields: readonly RuntimeBudgetField[];
+  readonly storagePath: string | null;
+}
+
 export interface V2SessionState {
   readonly projectId: string;
   readonly sessionId: string;
@@ -86,6 +116,7 @@ export interface V2SessionState {
   readonly tools?: readonly SessionTool[];
   readonly undone?: boolean;
   readonly closed?: boolean;
+  readonly runtimePreferences?: RuntimePreferencesSnapshot;
 }
 
 export type SessionControl =
@@ -94,7 +125,7 @@ export type SessionControl =
   | { readonly action: "configure"; readonly parameters: SessionParameters }
   | {
       readonly action: "configureRuntime";
-      readonly settings: { readonly instructions: string; readonly budgets: Record<string, number> };
+      readonly settings: RuntimePreferences;
       readonly revision: string;
     };
 
@@ -102,6 +133,7 @@ export type V2SessionCommand =
   | {
       readonly type: "command";
       readonly requestId: string;
+      readonly commandId: string;
       readonly action: "session/new";
       readonly projectId: string;
       readonly payload?: { readonly model?: string };
@@ -109,13 +141,31 @@ export type V2SessionCommand =
   | {
       readonly type: "command";
       readonly requestId: string;
-      readonly action: "session/inspect" | "session/cancel";
+      readonly commandId: string;
+      readonly action: "session/resume";
+      readonly projectId: string;
+      readonly sessionId: string;
+      readonly payload: { readonly resumeCapability: string };
+    }
+  | {
+      readonly type: "command";
+      readonly requestId: string;
+      readonly action: "session/inspect";
       readonly projectId: string;
       readonly sessionId: string;
     }
   | {
       readonly type: "command";
       readonly requestId: string;
+      readonly commandId: string;
+      readonly action: "session/cancel";
+      readonly projectId: string;
+      readonly sessionId: string;
+    }
+  | {
+      readonly type: "command";
+      readonly requestId: string;
+      readonly commandId: string;
       readonly action: "session/prompt";
       readonly projectId: string;
       readonly sessionId: string;
@@ -128,10 +178,12 @@ export type V2SessionCommand =
       readonly projectId: string;
       readonly sessionId: string;
       readonly payload: { readonly control: SessionControl };
+      readonly commandId?: string;
     }
   | {
       readonly type: "command";
       readonly requestId: string;
+      readonly commandId: string;
       readonly action: "tool/permission";
       readonly projectId: string;
       readonly sessionId: string;
@@ -182,6 +234,8 @@ export type V2ServerFrame =
       readonly projectId: string;
       readonly sessionId?: string;
       readonly state?: V2SessionState;
+      readonly resumeCapability?: string;
+      readonly commandId?: string;
     }
   | V2Signal
   | V2Error;
@@ -265,6 +319,15 @@ export function parseV2Info(value: unknown): V2Info | undefined {
       inputFrameBytes,
       outputFrameBytes,
       promptBytes,
+      ...(asNumber(limits.sessionResumeLeaseMs) !== undefined
+        ? { sessionResumeLeaseMs: asNumber(limits.sessionResumeLeaseMs) }
+        : {}),
+      ...(asNumber(limits.commandReceiptRetentionMs) !== undefined
+        ? { commandReceiptRetentionMs: asNumber(limits.commandReceiptRetentionMs) }
+        : {}),
+      ...(asNumber(limits.commandReceiptLimitPerPrincipal) !== undefined
+        ? { commandReceiptLimitPerPrincipal: asNumber(limits.commandReceiptLimitPerPrincipal) }
+        : {}),
     },
   };
 }
@@ -357,6 +420,63 @@ export function parseV2SessionState(value: unknown): V2SessionState | undefined 
     ...(tools ? { tools } : {}),
     ...(typeof value.undone === "boolean" ? { undone: value.undone } : {}),
     ...(typeof value.closed === "boolean" ? { closed: value.closed } : {}),
+    ...(parseRuntimePreferencesSnapshot(value.runtimePreferences)
+      ? { runtimePreferences: parseRuntimePreferencesSnapshot(value.runtimePreferences) }
+      : {}),
+  };
+}
+
+function parseRuntimePreferences(value: unknown): RuntimePreferences | undefined {
+  if (!isRecord(value) || typeof value.instructions !== "string" || !isRecord(value.budgets)) {
+    return undefined;
+  }
+  const budgets: Record<string, number> = {};
+  for (const [key, entry] of Object.entries(value.budgets)) {
+    if (typeof entry === "number" && Number.isFinite(entry)) budgets[key] = entry;
+  }
+  const semantic = isRecord(value.semantic)
+    ? {
+        model: asString(value.semantic.model) ?? "",
+        reasoningEffort:
+          value.semantic.reasoningEffort === null || typeof value.semantic.reasoningEffort === "string"
+            ? value.semantic.reasoningEffort
+            : null,
+      }
+    : undefined;
+  return {
+    instructions: value.instructions,
+    budgets,
+    ...(semantic && semantic.model ? { semantic } : {}),
+  };
+}
+
+function parseRuntimePreferencesSnapshot(value: unknown): RuntimePreferencesSnapshot | undefined {
+  if (!isRecord(value)) return undefined;
+  const revision = asString(value.revision);
+  const settings = parseRuntimePreferences(value.settings);
+  const defaults = parseRuntimePreferences(value.defaults);
+  if (!revision || !settings || !defaults) return undefined;
+  const fields = Array.isArray(value.fields)
+    ? value.fields.flatMap((entry) => {
+        if (!isRecord(entry)) return [];
+        const key = asString(entry.key);
+        const label = asString(entry.label);
+        const unit = asString(entry.unit);
+        const description = asString(entry.description);
+        const minimum = asNumber(entry.minimum);
+        const maximum = asNumber(entry.maximum);
+        if (!key || !label || unit === undefined || description === undefined || minimum === undefined || maximum === undefined) {
+          return [];
+        }
+        return [{ key, label, unit, description, minimum, maximum }];
+      })
+    : [];
+  return {
+    revision,
+    settings,
+    defaults,
+    fields,
+    storagePath: typeof value.storagePath === "string" || value.storagePath === null ? value.storagePath : null,
   };
 }
 
@@ -390,6 +510,8 @@ export function parseV2ServerFrame(value: unknown): V2ServerFrame | undefined {
       projectId,
       ...(asString(value.sessionId) ? { sessionId: asString(value.sessionId) } : {}),
       ...(state ? { state } : {}),
+      ...(asString(value.resumeCapability) ? { resumeCapability: asString(value.resumeCapability) } : {}),
+      ...(asString(value.commandId) ? { commandId: asString(value.commandId) } : {}),
     };
   }
   if (value.type === "signal") {

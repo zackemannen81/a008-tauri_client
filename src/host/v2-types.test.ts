@@ -59,26 +59,29 @@ test("session/new omits model so real ids with slashes and dots are not sent", (
   const encoded = encodeClientFrame({
     type: "command",
     requestId: "req_1",
+    commandId: "cmd_1",
     action: "session/new",
     projectId: PROJECT,
   });
   assert.equal(encoded.includes("model"), false);
   assert.equal(encoded.includes("payload"), false);
+  assert.equal(encoded.includes("commandId"), true);
 });
 
-test("session commands stay strict: no commandId is encoded", () => {
+test("mutating session commands encode commandId", () => {
   const encoded = encodeClientFrame({
     type: "command",
     requestId: "req_1",
+    commandId: "cmd_1",
     action: "session/prompt",
     projectId: PROJECT,
     sessionId: "session_1",
     payload: { text: "hello" },
   });
-  assert.equal(encoded.includes("commandId"), false);
   assert.deepEqual(JSON.parse(encoded), {
     type: "command",
     requestId: "req_1",
+    commandId: "cmd_1",
     action: "session/prompt",
     projectId: PROJECT,
     sessionId: "session_1",

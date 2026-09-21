@@ -382,7 +382,7 @@
 }
 .a008-theme-choices {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.85rem;
   margin-top: 1.2rem;
 }
@@ -436,6 +436,108 @@
   right: 1.4rem;
   bottom: 0.7rem;
   letter-spacing: 0.35em;
+}
+.a008-theme-card[data-a008-theme="oldscool"]::before,
+.a008-theme-card[data-a008-theme="oldscool"]::after {
+  position: absolute;
+  color: #84ff69;
+  opacity: 0.75;
+  pointer-events: none;
+  font-family: var(--a008-mono);
+  text-shadow: 0 0 0.45rem rgba(132, 255, 105, 0.8);
+}
+.a008-theme-card[data-a008-theme="oldscool"]::before {
+  content: "▰ ▰ ▰";
+  top: 0.75rem;
+  right: 0.8rem;
+  font-size: 0.45rem;
+  letter-spacing: 0.2rem;
+}
+.a008-theme-card[data-a008-theme="oldscool"]::after {
+  content: "READY";
+  right: 0.85rem;
+  bottom: 0.75rem;
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+}
+.a008-runtime-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.a008-radar-kicker {
+  margin: 0 !important;
+  color: var(--a008-accent) !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 0.14em;
+}
+.a008-radar-ready,
+.a008-radar-discovery {
+  flex: none;
+  border: 1px solid var(--a008-border-strong);
+  border-radius: 999px;
+  padding: 0.25rem 0.45rem;
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+}
+.a008-radar-ready {
+  color: var(--a008-accent);
+  border-color: var(--a008-accent);
+}
+.a008-runtime-meta {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.65rem 0;
+}
+.a008-runtime-meta > div {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1fr);
+  gap: 0.55rem;
+  font-size: 0.68rem;
+}
+.a008-runtime-meta dt {
+  color: var(--a008-muted);
+}
+.a008-runtime-meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.a008-runtime-features,
+.a008-runtime-pending {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.a008-runtime-features li,
+.a008-runtime-pending li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--a008-border);
+  color: var(--a008-muted);
+  font-size: 0.68rem;
+}
+.a008-runtime-features li[data-available="true"] {
+  color: var(--a008-fg-soft);
+}
+.a008-mcp ul {
+  list-style: none;
+  margin: 0.8rem 0;
+  padding: 0;
+}
+.a008-mcp li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--a008-border);
+}
+.a008-mcp-editor {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
 }
 @media (max-width: 640px) {
   .a008-theme-choices {

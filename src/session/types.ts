@@ -11,6 +11,12 @@ export interface ToolCall {
   readonly title: string;
   readonly status: string;
   readonly text: string;
+  readonly tool?: string;
+  readonly startedAt?: number;
+  readonly finishedAt?: number;
+  readonly recoveredBy?: string;
+  readonly argsSummary?: string;
+  readonly errorSummary?: string;
 }
 
 export interface ToolPermission {

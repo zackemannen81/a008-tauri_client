@@ -9,7 +9,7 @@ export const SLASH_HELP = `Composer commands:
   /status            Model, session and project.
   /tools             List model tools from the session snapshot.
 
-/shell, /cwd, upload and memory inspect are not on V2 HTTP yet.
+/shell and /! run on the host through POST /v1/shell.
 Unknown /commands are not sent to the model.
 `;
 

@@ -1,4 +1,4 @@
-export type AppThemeId = "neutral" | "deep-space";
+export type AppThemeId = "neutral" | "deep-space" | "oldscool";
 
 export interface AppTheme {
   readonly id: AppThemeId;
@@ -18,12 +18,18 @@ export const APP_THEMES: readonly AppTheme[] = [
   {
     id: "deep-space",
     name: "Deep Space",
-    description: "Blue-black navy surfaces with restrained electric-blue interaction.",
+    description:
+      "Blue-black navy surfaces with restrained electric-blue interaction.",
+  },
+  {
+    id: "oldscool",
+    name: "Oldscool",
+    description: "Dark CRT surfaces with phosphor-green controls and warm retro highlights.",
   },
 ];
 
 export function parseAppThemeId(value: unknown): AppThemeId {
-  return value === "deep-space" ? "deep-space" : DEFAULT_APP_THEME;
+  return value === "deep-space" || value === "oldscool" ? value : DEFAULT_APP_THEME;
 }
 
 export function applyAppTheme(
