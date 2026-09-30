@@ -20,6 +20,7 @@ import { ConnectPage } from "./pages/connect-page.js";
 import { HelpPage } from "./pages/help-page.js";
 import { MemoryPage } from "./pages/memory-page.js";
 import { ProjectsPage } from "./pages/projects-page.js";
+import { PlatformPage } from "./pages/platform-page.js";
 import { ToolsPage, type ToolSurface } from "./pages/tools-page.js";
 import { ParametersPanel } from "./settings/parameters-panel.js";
 import { SettingsPane } from "./settings/settings-pane.js";
@@ -35,9 +36,9 @@ const STATUS_LABEL = {
 } as const;
 
 const REVIEW_PROMPT =
-  "Granska ändringarna i arbetskopian med git status, git diff och git diff --cached. Läs berörda filer vid behov och sammanfatta fynden.";
+  "Granska ?ndringarna i arbetskopian med git status, git diff och git diff --cached. L?s ber?rda filer vid behov och sammanfatta fynden.";
 
-type Page = "chat" | "memory" | "tools" | "help" | "projects";
+type Page = "chat" | "memory" | "tools" | "help" | "projects" | "platform";
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -227,21 +228,21 @@ export function App() {
         </div>
         <nav className="a008-sidebar-nav" aria-label="Workspace">
           <button type="button" aria-current={page === "chat" ? "page" : undefined} onClick={() => navigate("chat")}>
-            <span aria-hidden="true">◌</span> Chat
+            <span aria-hidden="true">?</span> Chat
           </button>
           <button
             type="button"
             aria-current={page === "memory" ? "page" : undefined}
             onClick={() => navigate("memory")}
           >
-            <span aria-hidden="true">◇</span> Memory
+            <span aria-hidden="true">?</span> Memory
           </button>
           <button
             type="button"
             aria-current={page === "tools" ? "page" : undefined}
             onClick={() => navigate("tools")}
           >
-            <span aria-hidden="true">⌘</span> Tools
+            <span aria-hidden="true">?</span> Tools
           </button>
           <button type="button" aria-current={page === "help" ? "page" : undefined} onClick={() => navigate("help")}>
             <span aria-hidden="true">?</span> Help
@@ -251,8 +252,9 @@ export function App() {
             aria-current={page === "projects" ? "page" : undefined}
             onClick={() => navigate("projects")}
           >
-            <span aria-hidden="true">▣</span> Projects
+            <span aria-hidden="true">?</span> Projects
           </button>
+          <button type="button" aria-current={page === "platform" ? "page" : undefined} onClick={() => navigate("platform")}><span aria-hidden="true">â—«</span> Platform</button>
         </nav>
         <div className="a008-sidebar-workspace">
           <p className="a008-sidebar-caption">Workspace</p>
@@ -277,7 +279,7 @@ export function App() {
             width={1280}
             height={1164}
           />
-          <p>A008 · Desktop 0.1</p>
+          <p>A008 ? Desktop 0.1</p>
         </div>
       </aside>
       <header className="a008-header">
@@ -290,7 +292,7 @@ export function App() {
             onClick={() => setNavigationOpen(!navigationOpen)}
             type="button"
           >
-            ☰
+            ?
           </button>
           <span>
             {page === "chat"
@@ -301,7 +303,9 @@ export function App() {
                   ? "Help"
                   : page === "projects"
                     ? "Projects"
-                    : "Tools"}
+                    : page === "platform"
+                      ? "Platform"
+                      : "Tools"}
           </span>
           <span className="a008-header-workspace">{workspace}</span>
         </div>
@@ -331,7 +335,7 @@ export function App() {
                   setToolsOpen(false);
                 }}
               >
-                Canvas{artifact ? " •" : ""}
+                Canvas{artifact ? " ?" : ""}
               </button>
               <button
                 className="a008-panel-toggle"
@@ -400,6 +404,9 @@ export function App() {
       </div>
       <main className="a008-help-main" hidden={page !== "help"}>
         <HelpPage session={session} onChat={(prompt) => void ask(prompt)} />
+      </main>
+      <main className="a008-help-main" hidden={page !== "platform"}>
+        <PlatformPage active={page === "platform"} model={session.model} />
       </main>
       <main className="a008-help-main" hidden={page !== "projects"}>
         <ProjectsPage

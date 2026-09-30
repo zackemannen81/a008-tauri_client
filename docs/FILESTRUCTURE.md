@@ -52,3 +52,6 @@
 ## External Reference
 
 - `C:\code\a008` â€” read-only A008 source/reference repository; it is not part of this repository's writable source tree.
+- `src/pages/platform-page.tsx` — optional Platform V3 conversation/run surface.
+- `src/settings/skills-panel.tsx` — host-backed Skills catalog management.
+- `src/settings/zero-cost-radar-panel.tsx` — host-backed Zero Cost Radar.

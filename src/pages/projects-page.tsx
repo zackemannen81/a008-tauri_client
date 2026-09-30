@@ -1,68 +1,10 @@
 import { useEffect, useState } from "react";
-import { tryListProjects, type ListedProject } from "../host/v2-http.js";
+import { hostFetch } from "../host/tauri-http.js";
 import "./client.css";
-
-export function ProjectsPage(props: {
-  readonly httpBase: string;
-  readonly boundProjectId?: string;
-  readonly onSelect: (projectId: string) => void;
-}) {
-  const [projects, setProjects] = useState<readonly ListedProject[] | undefined>();
-  const [unavailable, setUnavailable] = useState("");
-
-  useEffect(() => {
-    void tryListProjects(props.httpBase).then((listed) => {
-      if (listed === undefined) {
-        setUnavailable("Unlock with the owner PIN on Connect to read the host project registry.");
-        return;
-      }
-      setProjects(listed.projects);
-    });
-  }, [props.httpBase]);
-
-  return (
-    <section className="a008-projects" aria-label="Projects">
-      <header>
-        <p>Project binding</p>
-        <h1>Projects</h1>
-      </header>
-      <p className="a008-note">
-        A V2 socket is bound to one registered project. Creating or opening a
-        project through V1 would switch the host&apos;s global workspace, which is
-        the wrong owner for this client. Select a listed ID and reconnect, or
-        paste the ID on Connect.
-      </p>
-      {props.boundProjectId ? (
-        <div className="a008-capability">
-          <strong>Bound project</strong>
-          <p>
-            <code>{props.boundProjectId}</code>
-          </p>
-        </div>
-      ) : null}
-      {unavailable ? <p className="a008-note">{unavailable}</p> : null}
-      {projects && projects.length === 0 ? <p className="a008-note">The host registry has no projects.</p> : null}
-      {projects && projects.length > 0 ? (
-        <ul className="a008-project-list">
-          {projects.map((project) => (
-            <li key={project.projectId}>
-              <button type="button" onClick={() => props.onSelect(project.projectId)}>
-                {project.name}
-                <span>{project.projectId}</span>
-                {project.rootFolder ? <span>{project.rootFolder}</span> : null}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      <div className="a008-capability">
-        <strong>Waiting on the host</strong>
-        <p>
-          <code>/v2/projects</code>, browse, bootstrap and register are not
-          implemented. New-project and add-existing stay in the A008 GUI until
-          those routes exist.
-        </p>
-      </div>
-    </section>
-  );
+type Project = { readonly projectId: string; readonly name: string; readonly rootFolder: string };
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> { const response = await hostFetch(path, init); const body = await response.json() as T & { message?: string }; if (!response.ok) throw new Error(body.message ?? "Project request failed."); return body; }
+export function ProjectsPage(props: { readonly httpBase: string; readonly boundProjectId?: string; readonly onSelect: (projectId: string) => void }) {
+ const [projects, setProjects] = useState<readonly Project[]>([]); const [mode, setMode] = useState<"new" | "existing">("new"); const [name, setName] = useState(""); const [rootFolder, setRootFolder] = useState(""); const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const refresh = () => request<{ projects: readonly Project[] }>("/v1/projects").then((result) => setProjects(result.projects)); useEffect(() => { void refresh().catch((reason) => setError(reason instanceof Error ? reason.message : "Could not load projects.")); }, []);
+ async function submit(): Promise<void> { setBusy(true); setError(""); const config = mode === "new" ? { projectName: name, rootFolder, repository: { initialize: true, name }, continuity: { docsFirst: true, multiAgent: { enabled: false } }, memory: { useGlobalA008Memory: true } } : { projectName: name, rootFolder, memory: { useGlobalA008Memory: true } }; try { if (mode === "new") { const plan = await request<{ projectId: string }>("/v1/projects/preview", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(config) }); await request("/v1/projects/bootstrap", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...config, projectId: plan.projectId }) }); } else await request("/v1/projects/register", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(config) }); setName(""); setRootFolder(""); await refresh(); } catch (reason) { setError(reason instanceof Error ? reason.message : "Project operation failed."); } finally { setBusy(false); } }
+ return <section className="a008-projects" aria-label="Projects"><header><p>Project lifecycle</p><h1>Projects</h1></header><div className="a008-help-actions"><button type="button" data-kind="secondary" aria-pressed={mode === "new"} onClick={() => setMode("new")}>New project</button><button type="button" data-kind="secondary" aria-pressed={mode === "existing"} onClick={() => setMode("existing")}>Add existing</button></div><form className="a008-connect-form" onSubmit={(event) => { event.preventDefault(); void submit(); }}><label>Project name<input required value={name} onChange={(event) => setName(event.currentTarget.value)} /></label><label>Project root folder<input required placeholder="C:\\code\\project" value={rootFolder} onChange={(event) => setRootFolder(event.currentTarget.value)} /></label><p className="a008-note">{mode === "new" ? "Creates a Docs-First Git project after host preview." : "Registers an existing folder without changing its files."}</p><button disabled={busy} type="submit">{mode === "new" ? "Create project" : "Add project"}</button></form>{error ? <p className="a008-parameter-error" role="alert">{error}</p> : null}{props.boundProjectId ? <div className="a008-capability"><strong>Bound project</strong><p><code>{props.boundProjectId}</code></p></div> : null}<h2>Registered projects</h2>{projects.length === 0 ? <p className="a008-note">No registered projects.</p> : <ul className="a008-project-list">{projects.map((project) => <li key={project.projectId}><button type="button" onClick={() => props.onSelect(project.projectId)}>{project.name}<span>{project.rootFolder}</span><span>{project.projectId}</span></button></li>)}</ul>}</section>;
 }

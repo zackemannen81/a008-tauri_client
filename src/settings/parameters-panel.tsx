@@ -10,6 +10,8 @@ import { McpServersPanel } from "./mcp-servers-panel.js";
 import { ModelParameterForm } from "./model-form.js";
 import { NvidiaCatalogPanel } from "./nvidia-catalog-panel.js";
 import { RuntimeCapabilitiesPanel } from "./runtime-capabilities-panel.js";
+import { SkillsPanel } from "./skills-panel.js";
+import { ZeroCostRadarPanel } from "./zero-cost-radar-panel.js";
 import "./parameters.css";
 
 type ParameterPage =
@@ -20,7 +22,9 @@ type ParameterPage =
   | "runtime"
   | "budgets"
   | "instructions"
-  | "appearance";
+  | "appearance"
+  | "skills"
+  | "radar";
 
 const PARAMETER_TABS: readonly { id: ParameterPage; label: string }[] = [
   { id: "model", label: "Model" },
@@ -31,6 +35,8 @@ const PARAMETER_TABS: readonly { id: ParameterPage; label: string }[] = [
   { id: "budgets", label: "Budgets" },
   { id: "instructions", label: "Instructions" },
   { id: "appearance", label: "Appearance" },
+  { id: "skills", label: "Skills" },
+  { id: "radar", label: "Zero Cost" },
 ];
 
 function emptyRuntimePreferences(model: string): RuntimePreferencesSnapshot {
@@ -124,7 +130,7 @@ export function ParametersPanel(props: {
           <h2>Parameters</h2>
         </div>
         <button type="button" aria-label="Close parameters" onClick={props.onClose}>
-          ×
+          Ã—
         </button>
       </header>
       <div className="a008-parameters-body">
@@ -243,6 +249,14 @@ export function ParametersPanel(props: {
           ) : (
             <p className="a008-parameter-footnote">Connect to inspect and change persistent instructions.</p>
           )}
+        </div>
+
+        <div hidden={page !== "radar"}>
+          <ZeroCostRadarPanel />
+        </div>
+
+        <div hidden={page !== "skills"}>
+          <SkillsPanel />
         </div>
 
         <div hidden={page !== "appearance"}>
