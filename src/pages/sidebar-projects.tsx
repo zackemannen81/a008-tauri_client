@@ -1,0 +1,16 @@
+import { useEffect, useState } from "react";
+import { tryListSidebarProjects, resolveHostEndpoints } from "../host/v2-http.js";
+import type { SidebarProject } from "../platform/platform-client.js";
+export function SidebarProjects(props: { readonly projectId: string; readonly selectedConversationId: string; readonly hidden?: boolean; readonly onProject: (projectId: string) => void; readonly onConversation: (projectId: string, conversationId: string) => void; readonly onNewChat: (projectId: string) => void; readonly onProjects: () => void }) {
+  const [projects, setProjects] = useState<readonly SidebarProject[]>([]);
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
+  const [error, setError] = useState("");
+  useEffect(() => { if (props.hidden) return; let live = true; void tryListSidebarProjects(resolveHostEndpoints("").httpBase).then((result) => { if (live && result) { setProjects(result.projects); setError(""); } else if (live) setError("Projects require PIN access."); }).catch(() => { if (live) setError("Projects require PIN access."); }); return () => { live = false; }; }, [props.projectId, props.hidden, props.selectedConversationId]);
+  const sorted = [...projects].sort((a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || a.name.localeCompare(b.name, undefined, { numeric: true }));
+  return <section className="a008-project-sidebar" aria-label="Project chats" hidden={props.hidden}><header><strong>Projects</strong><button type="button" onClick={props.onProjects}>Manage</button></header>
+    {error ? <p role="status">{error}</p> : null}
+    <ul>{sorted.map((project) => <li key={project.projectId}>
+      <div className="a008-project-sidebar-row"><button type="button" aria-label={`${collapsed.has(project.projectId) ? "Expand" : "Collapse"} ${project.name}`} aria-expanded={!collapsed.has(project.projectId)} onClick={() => setCollapsed((previous) => { const next = new Set(previous); if (next.has(project.projectId)) next.delete(project.projectId); else next.add(project.projectId); return next; })}>{collapsed.has(project.projectId) ? "▸" : "▾"}</button><button type="button" title={project.rootFolder} aria-current={props.projectId === project.projectId ? "page" : undefined} onClick={() => props.onProject(project.projectId)}>{project.name}</button><button type="button" aria-label={`Project details: ${project.name}`} onClick={() => { const action = window.prompt("Type pin or rename", "pin"); if (action === "pin" || action === "rename") void window.dispatchEvent(new CustomEvent("a008-project-action", { detail: { projectId: project.projectId, action } })); }}>⋯</button><button type="button" aria-label={`New chat in ${project.name}`} onClick={() => props.onNewChat(project.projectId)}>✎</button></div>
+      {!collapsed.has(project.projectId) ? <><ul>{project.conversations.map((chat) => <li key={chat.conversationId}><button type="button" aria-current={props.selectedConversationId === chat.conversationId && props.projectId === project.projectId ? "page" : undefined} onClick={() => props.onConversation(project.projectId, chat.conversationId)}>{chat.title}</button></li>)}</ul><button type="button" onClick={() => props.onProject(project.projectId)}>Workspace sessions</button></> : null}
+    </li>)}</ul></section>;
+}

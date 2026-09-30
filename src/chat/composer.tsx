@@ -1,20 +1,34 @@
-import { useId, useState, type FormEvent, type KeyboardEvent } from "react";
-import { generateImage } from "../images/generate-image.js";
+import { useId, useEffect, useState, useRef, type FormEvent, type KeyboardEvent, type ChangeEvent, type DragEvent, type ClipboardEvent } from "react";
 import { tryListModels } from "../host/v2-http.js";
 import type { ClientSession } from "../session/types.js";
-import { runShellCommand } from "../terminal/run-shell-command.js";
+import type { UploadableFile, UploadedSource } from "../host/v1-http.js";
 import { parseSlash, SLASH_HELP } from "./slash.js";
+import { uploadSource, uploadSourcePath } from "../host/v1-http.js";
+import { loadSkills, discoverSkillCatalog, installDiscoveredSkill, removeInstalledSkill, uploadImageFile, uploadImagePath, storedImageUrl, type InstalledSkill as Skill } from "../platform/platform-client.js";
 
 export function Composer(props: {
   readonly session: ClientSession;
   readonly httpBase?: string;
   readonly onParameters?: () => void;
+  readonly skill?: Skill;
+  readonly onSkillSelected?: (skill: Skill | undefined) => void;
+  readonly onImage?: (prompt: string) => void;
 }) {
   const inputId = useId();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const attachMenu = useRef<HTMLDetailsElement>(null);
+  const [attachment, setAttachment] = useState<(UploadedSource & { readonly name: string })>();
+  const [localPath, setLocalPath] = useState("");
+  const [showPathInput, setShowPathInput] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [draft, setDraft] = useState("");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [skills, setSkills] = useState<readonly Skill[]>([]);
+  const [selectedSkillId, setSelectedSkillId] = useState("");
+  useEffect(() => { let live = true; void loadSkills().then((next) => { if (live) setSkills(next); }).catch(() => undefined); const refresh = () => { void loadSkills().then((next) => { if (live) setSkills(next); }).catch(() => undefined); }; window.addEventListener("a008-skills-changed", refresh); return () => { live = false; window.removeEventListener("a008-skills-changed", refresh); }; }, []);
+  const selectedSkill = skills.find((skill) => skill.id === selectedSkillId);
   const connected = props.session.status === "ready";
   const canSend = connected && !props.session.busy && !pending;
 
@@ -29,7 +43,8 @@ export function Composer(props: {
       return;
     }
     if (parsed === undefined) {
-      await props.session.prompt(text);
+      await props.session.prompt(text, attachment ? { type: "image", locator: attachment.locator, mediaType: attachment.mediaType } : undefined);
+      setAttachment(undefined);
       setDraft("");
       return;
     }
@@ -109,6 +124,36 @@ export function Composer(props: {
     }
   }
 
+  function acceptUploadedImage(uploaded: UploadedSource, name: string): void {
+    if (!uploaded.mediaType.toLowerCase().startsWith("image/")) throw new Error(`Selected source is ${uploaded.mediaType}, not an image.`);
+    setAttachment({ ...uploaded, name });
+  }
+  async function attachImage(file: File | undefined): Promise<void> {
+    if (!file) return;
+    setUploading(true); setError("");
+    try { const uploadable: UploadableFile = file.name.trim() ? file : new File([file], "clipboard-image", { type: file.type }); acceptUploadedImage(await uploadImageFile(uploadable), uploadable.name); if (attachMenu.current) attachMenu.current.open = false; }
+    catch (error) { setError(error instanceof Error ? error.message : "Image upload failed."); }
+    finally { setUploading(false); if (fileInput.current) fileInput.current.value = ""; }
+  }
+  async function attachLocalPath(): Promise<void> {
+    const path = localPath.trim(); if (!path) { setError("Enter an absolute local file path."); return; }
+    setUploading(true); setError("");
+    try { const uploaded = await uploadImagePath(path); acceptUploadedImage(uploaded, path.split(/[\\/]/u).filter(Boolean).at(-1) ?? path); setLocalPath(""); setShowPathInput(false); }
+    catch (error) { setError(error instanceof Error ? error.message : "Image upload failed."); }
+    finally { setUploading(false); }
+  }
+  function onPaste(event: ClipboardEvent<HTMLTextAreaElement>): void {
+    const image = Array.from(event.clipboardData.files).find((file) => file.type.toLowerCase().startsWith("image/"));
+    if (image) { event.preventDefault(); void attachImage(image); }
+  }
+  function onDrop(event: DragEvent<HTMLElement>): void {
+    if (!event.dataTransfer.types.includes("Files")) return;
+    event.preventDefault();
+    const image = Array.from(event.dataTransfer.files).find((file) => file.type.toLowerCase().startsWith("image/"));
+    if (image) void attachImage(image); else setError("Drop an image file.");
+  }
+  const selectedSkill = skills.find((skill) => skill.id === selectedSkillId);
+
   async function runCommand(command: string): Promise<void> {
     if (command === "/shell") {
       setDraft("/shell ");
@@ -129,7 +174,10 @@ export function Composer(props: {
     if (!canSend || submitted.length === 0) return;
     setPending(true);
     try {
-      await run(submitted);
+      const submittedText = selectedSkill ? `${submitted}\n\n[Selected skill: ${selectedSkill.name}]\n${selectedSkill.instructions}` : submitted;
+      await props.session.prompt(submittedText, attachment ? { type: "image", locator: attachment.locator, mediaType: attachment.mediaType } : undefined);
+      setAttachment(undefined);
+      setDraft("");
     } catch (caught) {
       // V2 prompt failures already live on session.error and render in ChatPane.
       // Keep composer-local errors for slash commands only, so one runtime
