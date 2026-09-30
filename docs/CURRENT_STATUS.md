@@ -1,6 +1,6 @@
 # Current Status
 
-Reality as of 2026-09-26. This document records observed state, not intended architecture.
+Reality as of 2026-09-30. This document records observed state, not intended architecture.
 
 ## What exists
 
@@ -17,7 +17,8 @@ Reality as of 2026-09-26. This document records observed state, not intended arc
 
 ## Current Work
 
-ATC-0013 is complete. No task is active.
+`ATC-0011`, `ATC-0012` and `ATC-0013` are complete. No task is active. Next
+identity is `ATC-0014`.
 
 ## Established limits
 

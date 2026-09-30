@@ -1,6 +1,6 @@
 # Task ID Register
 
-Floor: ATC-0013
+Floor: ATC-0014
 
 | Task ID | Title | Owner | Claimed | Work |
 | --- | --- | --- | --- | --- |
@@ -16,3 +16,4 @@ Floor: ATC-0013
 | ATC-0010 | Remove duplicate empty-chat shortcuts | ChatGPT | 2026-09-16 | Complete |
 | ATC-0011 | Group V2 tool activity and de-duplicate prompt errors | ChatGPT | 2026-09-16 | Complete |
 | ATC-0012 | Lift remaining GUI owner surfaces except Zero Cost Radar | Grok | 2026-09-21 | Complete |
+| ATC-0013 | Re-inventory current A008 GUI and refresh parity matrix | A008 | 2026-09-30 | Complete |
