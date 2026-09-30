@@ -69,6 +69,7 @@ class V2SessionClientImpl implements V2SessionClient {
   #pending: Pending | undefined;
   #allowAll = false;
   #generation = 0;
+  #resumeCapability: string | undefined;
 
   constructor(options: V2SessionClientOptions) {
     this.#host = options.host ?? "";
@@ -150,6 +151,7 @@ class V2SessionClientImpl implements V2SessionClient {
   dispose = (): void => {
     this.#generation += 1;
     this.#allowAll = false;
+    this.#resumeCapability = undefined;
     this.#rejectPending(new Error("Client disposed."));
     this.#detachSocket();
     this.#connectWork = undefined;
@@ -206,6 +208,7 @@ class V2SessionClientImpl implements V2SessionClient {
       await this.#request({
         type: "command",
         requestId: this.#createRequestId(),
+        commandId: this.#createRequestId(),
         action: "session/prompt",
         projectId: this.#projectId,
         sessionId,
@@ -222,6 +225,7 @@ class V2SessionClientImpl implements V2SessionClient {
     await this.#request({
       type: "command",
       requestId: this.#createRequestId(),
+      commandId: this.#createRequestId(),
       action: "session/cancel",
       projectId: this.#projectId,
       sessionId,
@@ -239,6 +243,7 @@ class V2SessionClientImpl implements V2SessionClient {
         projectId: this.#projectId,
         sessionId,
         payload: { control },
+        ...(control.action === "inspect" ? {} : { commandId: this.#createRequestId() }),
       });
       if (control.action === "close") {
         this.#allowAll = false;
@@ -270,6 +275,7 @@ class V2SessionClientImpl implements V2SessionClient {
       encodeClientFrame({
         type: "command",
         requestId: this.#createRequestId(),
+        commandId: this.#createRequestId(),
         action: "tool/permission",
         projectId: this.#projectId,
         sessionId,
@@ -378,6 +384,7 @@ class V2SessionClientImpl implements V2SessionClient {
       return;
     }
     if (frame.type === "result") {
+      if (frame.resumeCapability) this.#resumeCapability = frame.resumeCapability;
       const state = frame.state;
       const pendingResult = this.#pending;
       if (pendingResult && pendingResult.requestId === frame.requestId) {
@@ -412,6 +419,7 @@ class V2SessionClientImpl implements V2SessionClient {
           encodeClientFrame({
             type: "command",
             requestId: this.#createRequestId(),
+            commandId: this.#createRequestId(),
             action: "tool/permission",
             projectId: this.#projectId,
             sessionId: this.#snapshot.sessionId,
@@ -432,6 +440,7 @@ class V2SessionClientImpl implements V2SessionClient {
     const created = await this.#request({
       type: "command",
       requestId: this.#createRequestId(),
+      commandId: this.#createRequestId(),
       action: "session/new",
       projectId,
     });
@@ -441,6 +450,7 @@ class V2SessionClientImpl implements V2SessionClient {
         state = await this.#request({
           type: "command",
           requestId: this.#createRequestId(),
+          commandId: this.#createRequestId(),
           action: "session/control",
           projectId,
           sessionId: created.sessionId,

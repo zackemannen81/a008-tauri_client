@@ -1,9 +1,13 @@
 import { useId, useState, type FormEvent, type KeyboardEvent } from "react";
+import { generateImage } from "../images/generate-image.js";
+import { tryListModels } from "../host/v2-http.js";
 import type { ClientSession } from "../session/types.js";
+import { runShellCommand } from "../terminal/run-shell-command.js";
 import { parseSlash, SLASH_HELP } from "./slash.js";
 
 export function Composer(props: {
   readonly session: ClientSession;
+  readonly httpBase?: string;
   readonly onParameters?: () => void;
 }) {
   const inputId = useId();
@@ -64,6 +68,12 @@ export function Composer(props: {
         if (parsed.argument !== "") {
           const state = await props.session.controlSession({ action: "model", model: parsed.argument });
           setNotice(`Model: ${state.model}\nNew conversation started with this model's runtime defaults.`);
+        } else if (props.httpBase) {
+          const listed = await tryListModels(props.httpBase);
+          const registry = listed?.map((item) => `${item.id}  ${item.name}`).join("\n");
+          setNotice(
+            `Current: ${props.session.model}\n\n${registry || "(model catalog unavailable)"}\n\n/model <id> starts a new conversation.`,
+          );
         } else {
           setNotice(`Current: ${props.session.model}\n/model <id> starts a new conversation.`);
         }
@@ -85,23 +95,48 @@ export function Composer(props: {
         setDraft("");
         return;
       case "shell":
+        if (parsed.argument === "") {
+          setDraft("/shell ");
+          return;
+        }
+        setNotice(await runShellCommand(parsed.argument));
+        setDraft("");
+        return;
       case "cwd":
-        setError(
-          parsed.name === "shell"
-            ? "/shell is not available: POST /v2/projects/{id}/shell is not implemented on the current host."
-            : "Working directory is omitted from V2 session snapshots. /cwd waits for V2 project metadata.",
-        );
+        setNotice(await runShellCommand("pwd"));
+        setDraft("");
         return;
     }
   }
 
-  async function submitDraft(): Promise<void> {
-    if (!canSend || draft.trim().length === 0) return;
+  async function runCommand(command: string): Promise<void> {
+    if (command === "/shell") {
+      setDraft("/shell ");
+      return;
+    }
     setPending(true);
     try {
-      await run(draft.trim());
+      await run(command);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Composer submit failed.");
+      setError(caught instanceof Error ? caught.message : "Command failed.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function submitDraft(): Promise<void> {
+    const submitted = draft.trim();
+    if (!canSend || submitted.length === 0) return;
+    setPending(true);
+    try {
+      await run(submitted);
+    } catch (caught) {
+      // V2 prompt failures already live on session.error and render in ChatPane.
+      // Keep composer-local errors for slash commands only, so one runtime
+      // failure is not shown both above the transcript and below the composer.
+      if (submitted.startsWith("/")) {
+        setError(caught instanceof Error ? caught.message : "Composer command failed.");
+      }
     } finally {
       setPending(false);
     }
@@ -149,6 +184,69 @@ export function Composer(props: {
               </button>
             )}
           </div>
+          <div className="a008-composer-tools">
+            <details className="a008-composer-attach">
+              <summary aria-label="More actions">+</summary>
+              <button
+                type="button"
+                disabled={!connected || pending}
+                onClick={() => {
+                  const prompt = draft.trim();
+                  if (prompt.length === 0) {
+                    setError("Describe the image to generate.");
+                    return;
+                  }
+                  setPending(true);
+                  setError("");
+                  void generateImage(prompt)
+                    .then((image) => {
+                      setNotice(`Generated image ${image.filename}\n${image.sha256}`);
+                      setDraft("");
+                    })
+                    .catch((caught) => {
+                      setError(caught instanceof Error ? caught.message : "Image generation failed.");
+                    })
+                    .finally(() => setPending(false));
+                }}
+              >
+                Generate image
+              </button>
+            </details>
+            <div className="a008-session-toolbar" aria-label="Session controls">
+              <select
+                aria-label="Session commands"
+                value=""
+                disabled={!connected || props.session.busy || pending}
+                onChange={(event) => void runCommand(event.currentTarget.value)}
+              >
+                <option value="" disabled>Commands</option>
+                <option value="/help">Help /help</option>
+                <option value="/history">History /history</option>
+                <option value="/model">Models /model</option>
+                <option value="/status">Status /status</option>
+                <option value="/cwd">Working directory /cwd</option>
+                <option value="/tools">Tools /tools</option>
+                <option value="/shell">Shell command /shell</option>
+                <option value="/reset">Reset /reset</option>
+                <option value="/undo">Undo /undo</option>
+                <option value="/exit">End session /exit</option>
+              </select>
+              <button
+                type="button"
+                disabled={!connected || props.session.busy || pending}
+                onClick={() => void runCommand("/undo")}
+              >
+                Undo
+              </button>
+              <button
+                type="button"
+                disabled={!connected || props.session.busy || pending}
+                onClick={() => void runCommand("/reset")}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
           <div className="a008-composer-footer">
             <button type="button" onClick={props.onParameters}>
               {props.session.model}
@@ -158,7 +256,14 @@ export function Composer(props: {
         </form>
       </div>
       {error ? <p className="a008-composer-error">{error}</p> : null}
-      {notice ? <pre className="a008-composer-notice">{notice}</pre> : null}
+      {notice ? (
+        <div className="a008-command-output">
+          <button type="button" aria-label="Dismiss command output" onClick={() => setNotice("")}>
+            ×
+          </button>
+          <pre className="a008-composer-notice" role="status">{notice}</pre>
+        </div>
+      ) : null}
     </section>
   );
 }

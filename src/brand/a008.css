@@ -73,6 +73,91 @@ body {
   background-size: 26px 26px;
 }
 
+.a008-crt-overlay {
+  display: none;
+}
+
+html[data-a008-theme="oldscool"] .a008-crt-overlay {
+  position: absolute;
+  z-index: 20;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 2px,
+    var(--a008-crt-scanline) 3px,
+    var(--a008-crt-scanline) 4px
+  );
+  mix-blend-mode: multiply;
+}
+
+html[data-a008-theme="oldscool"] .a008-brand,
+html[data-a008-theme="oldscool"] .a008-header-status,
+html[data-a008-theme="oldscool"] .a008-settings-title,
+html[data-a008-theme="oldscool"] .a008-settings-row[data-field="product"] dd {
+  text-shadow: 0 0 0.4rem var(--a008-crt-bloom);
+}
+
+html[data-a008-theme="oldscool"] .a008-composer-send,
+html[data-a008-theme="oldscool"] .a008-settings-connect,
+html[data-a008-theme="oldscool"] .a008-header-tabs button[aria-current] {
+  border-color: var(--a008-success);
+  box-shadow: var(--a008-glow-accent);
+  text-shadow: 0 0 0.35rem var(--a008-crt-bloom);
+}
+
+.a008-terminal,
+.a008-upload {
+  padding: 0.75rem 1rem;
+  color: var(--a008-muted);
+  min-height: 0;
+  overflow: auto;
+}
+
+.a008-terminal-history {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.a008-terminal-command {
+  font-family: var(--a008-mono);
+  color: var(--a008-accent);
+}
+
+.a008-terminal-output {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--a008-mono);
+  font-size: 0.78rem;
+}
+
+.a008-terminal-form,
+.a008-upload-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.a008-terminal-form label {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.a008-terminal-form input {
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--a008-border);
+  border-radius: 0.25rem;
+  background: var(--a008-panel-quiet);
+  color: var(--a008-fg);
+  font: inherit;
+}
+
 /* Identity left, workspace tabs centre, runtime status right. */
 .a008-header {
   grid-column: 1 / -1;

@@ -21,11 +21,19 @@
 - `src/main.tsx` — React mount and theme boot.
 - `src/app.tsx` — workspace shell and page routing.
 - `src/brand/` — A008 visual tokens, mark, and ASCII empty-chat logo.
-- `src/host/` — V2 HTTP/WebSocket adapter, Tauri loopback fetch, connection storage.
+- `src/host/` — V2 HTTP/WebSocket adapter, V1 owner HTTP, Tauri loopback fetch, connection storage, model catalog parse.
 - `src/session/` — session hook and tool-permission dialog.
-- `src/chat/` — transcript, composer, start actions.
-- `src/pages/` — Connect, Memory, Tools, Help, Projects.
-- `src/settings/` — Parameters dialog (theme and session controls).
+- `src/chat/` — transcript, composer, start actions, shortcut dock, tool activity.
+- `src/artifact/` — local HTML Code Canvas parse and preview.
+- `src/files/` — git ls-files listing; opening a path sends a chat prompt.
+- `src/browser/` — iframe browser pane plus host frame-check.
+- `src/workbench/` — Tools tabs and Chat environment prompts.
+- `src/pages/` — Connect, Memory re-export, Tools, Help, Projects.
+- `src/memory/` — Overview / graph / manager over `GET /v1/memory`.
+- `src/terminal/` — Host shell pane over `POST /v1/shell`.
+- `src/upload/` — Source ingest over `POST /v1/upload`.
+- `src/images/` — Composer generate-image over `POST /v1/images`.
+- `src/settings/` — Parameters (model, semantic, provider, MCP, runtime, budgets, instructions, appearance).
 
 ## Control Plane
 
@@ -36,6 +44,7 @@
 - `docs/CURRENT_STATUS.md` — observed state.
 - `docs/SYSTEMDOC.md` — implemented behavior and contracts.
 - `docs/JOURNAL.md` — append-only project history.
+- `docs/GUI_PARITY.md` — GUI feature comparison matrix and missing V2 host rows.
 - `docs/adr/` — durable architectural decisions.
 - `docs/backlog/` — future work not currently active.
 - `docs/finished/` and `docs/paused/` — completed or paused task records.
@@ -43,3 +52,6 @@
 ## External Reference
 
 - `C:\code\a008` — read-only A008 source/reference repository; it is not part of this repository's writable source tree.
+- `src/pages/platform-page.tsx` � optional Platform V3 conversation/run surface.
+- `src/settings/skills-panel.tsx` � host-backed Skills catalog management.
+- `src/settings/zero-cost-radar-panel.tsx` � host-backed Zero Cost Radar.

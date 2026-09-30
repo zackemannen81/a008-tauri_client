@@ -2,6 +2,56 @@
 
 Newest first. Append only.
 
+## 2026-09-21 — ATC-0012 — GUI owner surface lift except Zero Cost Radar
+
+- Closed ATC-0011: grouped V2 tool activity on the correct assistant turn;
+  ordinary prompt failures stay on ChatPane only.
+- Mutating V2 commands now encode Stage-4 `commandId`.
+- Ported remaining GUI owner surfaces except Zero Cost Radar: Memory inspect
+  UI, Terminal, Upload, Browser frame-check, Files git listing, Provider, MCP,
+  Runtime (`GET /v2/info`), Semantic/Budgets/Instructions (`configureRuntime`),
+  Oldscool theme, composer `/shell` and Generate image.
+- ADR 0004: owner PIN desktop client may use the GUI's V1 owner HTTP where V2
+  business routes still do not exist. Project bind remains V2 reconnect-by-id.
+- Verification: 45/45 tests; `frontend:build` passes (449.20 kB JS, 136.48 kB
+  gzip); `git diff --check` clean apart from line-ending warnings.
+- `C:\code\a008` remained read-only.
+
+## 2026-09-16 - ATC-0010 - Remove duplicate empty-chat shortcuts
+
+- Removed the duplicate centre shortcut list from the empty conversation view.
+- Kept the persistent ShortcutDock and keyboard shortcuts unchanged.
+- Verification: 38/38 tests; `frontend:build` passes.
+
+## 2026-09-16 â€” ATC-0009 â€” Stage-4 client readiness
+
+- Closed the remaining renderer-local GUI parity gaps left after ATC-0008:
+  4D empty-chat starfield, highlight.js fenced-code rendering, highlighted Code
+  Canvas editing, and composer command selector plus Undo/Reset controls.
+- Unsupported shell/cwd/image behavior remains explicit waiting UI; no V1
+  workspace mutation was introduced. Executable V1 calls remain the approved
+  best-effort `GET /v1/projects` and `GET /v1/models` reads.
+- Source audit found no `session/resume` or `resumeToken`; `commandId` remains
+  absent from encoded commands. Stage 4 semantics are left to A008.
+- Verification: 38/38 tests; `frontend:build` passes (383.52 kB JS, 117.42 kB
+  gzip); `git diff --check` clean apart from line-ending warnings; live
+  `GET /v2/info` reports `a008.v2` with ticket + WebSocket features.
+- `cargo` is not available on PATH in this shell, so Rust check was not rerun.
+  `C:\code\a008` remained clean and read-only.
+
+## 2026-09-15 — ATC-0008 — GUI parity before Stage 4
+
+- Inventoried every user-visible A008 GUI surface against this client.
+- Matrix: `docs/GUI_PARITY.md`. ADR 0003: transfer local + implemented V2;
+  do not emulate V1 global workspace.
+- Transferred: shortcut dock/keys, Code Canvas, Files/Workbench floats,
+  Tools workbench (Browser iframe, prompt Files), Model `configure`, Help
+  repository prompts, Memory tab chrome, runtime details.
+- Not ported: memory inspect, shell, upload, images, project
+  bootstrap/register/open, catalog, host-global instructions/budgets,
+  starfield, highlight.js.
+- Verification: 27/27 tests; `frontend:build` passes; `C:\code\a008` unchanged.
+
 ## 2026-09-15 — ATC-0007 — Tauri HTTP proxy for implemented V2
 
 - Packaged Tauri `fetch` to `:8787` is CORS-blocked. Vite same-origin proxy hid it.
@@ -67,3 +117,13 @@ Newest first. Append only.
 ## Bootstrap
 
 - Created by A008 project bootstrap.
+
+## 2026-09-26 � ATC-0013 � Complete GUI parity
+
+- Re-inventoried the current `C:\code\a008\gui` without modifying it.
+- Added V1 file browse/edit, project preview/bootstrap/register, Skills, Zero
+  Cost Radar, and Platform V3 surfaces through the existing Tauri loopback proxy.
+- V3 renders explicit unavailable state if its optional host backend is disabled.
+- Updated the parity matrix to classify every reference feature as Live, Local,
+  or evidenced Unavailable.
+- Verification: 45/45 tests, production frontend build and `git diff --check` pass.

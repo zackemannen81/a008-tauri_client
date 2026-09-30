@@ -90,6 +90,46 @@
   line-height: 1.55;
 }
 
+.a008-help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.a008-help-actions button {
+  color: inherit;
+  background: var(--a008-panel);
+  border: 1px solid var(--a008-border);
+  border-radius: 0.35rem;
+  padding: 0.65rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.a008-help-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.a008-help-shortcuts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.a008-help-shortcuts li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--a008-border);
+  border-radius: 0.7rem;
+  background: var(--a008-panel);
+}
+
 .a008-help kbd {
   font: 0.72rem var(--a008-mono, monospace);
   border: 1px solid var(--a008-border-strong);

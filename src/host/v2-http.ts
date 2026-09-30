@@ -3,6 +3,7 @@ import {
   DEFAULT_A008_WS,
   hostFetch,
 } from "./tauri-http.js";
+import { parseModelCatalog, type CatalogModel } from "./model-catalog.js";
 import {
   parseV2Error,
   parseV2Info,
@@ -152,10 +153,7 @@ export interface ProjectListing {
   readonly projects: readonly ListedProject[];
 }
 
-export interface ListedModel {
-  readonly id: string;
-  readonly name: string;
-}
+export type ListedModel = CatalogModel;
 
 export function parseProjectListing(body: unknown): ProjectListing {
   if (!body || typeof body !== "object" || !("projects" in body) || !Array.isArray(body.projects)) {
@@ -177,16 +175,7 @@ export function parseProjectListing(body: unknown): ProjectListing {
 }
 
 function parseModels(body: unknown): readonly ListedModel[] {
-  if (!body || typeof body !== "object" || !("models" in body) || !Array.isArray(body.models)) {
-    return [];
-  }
-  return body.models.flatMap((entry) => {
-    if (!entry || typeof entry !== "object") return [];
-    const id = "id" in entry && typeof entry.id === "string" ? entry.id : "";
-    const name = "name" in entry && typeof entry.name === "string" ? entry.name : id;
-    if (!id) return [];
-    return [{ id, name }];
-  });
+  return parseModelCatalog(body);
 }
 
 /** Best-effort V1 reads. Fail closed without throwing into the V2 session path. */

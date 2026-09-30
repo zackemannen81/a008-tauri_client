@@ -87,3 +87,40 @@ test("live thought is not merged into committed answers", () => {
     assert.equal(assistant.live, true);
   }
 });
+
+test("completed tool activity stays on the completed assistant turn", () => {
+  const transcript = buildChatTranscript(
+    session({
+      details: {
+        projectId: "p",
+        sessionId: "s",
+        model: "m",
+        parameters: {
+          stream: true,
+          temperature: null,
+          topP: null,
+          maxTokens: 1,
+          enableThinking: null,
+          reasoningBudget: null,
+          reasoningEffort: null,
+          seed: null,
+          stop: null,
+        },
+        messages: [
+          { role: "user", content: "status?" },
+          { role: "assistant", content: "clean" },
+        ],
+        active: false,
+      },
+      tools: [{ id: "tool-1", title: "git", status: "completed", text: "clean" }],
+    }),
+  );
+  assert.equal(transcript.turns.length, 2);
+  const last = transcript.turns.at(-1);
+  assert.equal(last?.kind, "assistant");
+  if (last?.kind === "assistant") {
+    assert.equal(last.live, false);
+    assert.equal(last.tools?.length, 1);
+    assert.equal(last.tools?.[0]?.title, "git");
+  }
+});

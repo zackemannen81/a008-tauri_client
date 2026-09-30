@@ -53,24 +53,31 @@ export function buildChatTranscript(session: ClientSession): ChatTranscript {
     turns.push({ kind: "user", id: "pending-user", text: session.pendingText });
   }
 
-  if (session.busy || session.thought !== "" || session.answer !== "" || session.tools.length > 0) {
-    const liveLast = turns.at(-1);
-    if (liveLast?.kind === "assistant" && liveLast.live) {
-      turns[turns.length - 1] = {
-        ...liveLast,
-        thought: session.thought,
-        answer: session.answer,
-        tools: session.tools,
-      };
+  const hasLiveAssistant = session.busy || session.thought !== "" || session.answer !== "";
+  if (hasLiveAssistant) {
+    turns.push({
+      kind: "assistant",
+      id: "live-assistant",
+      thought: session.thought,
+      answer: session.answer,
+      live: true,
+      ...(session.tools.length > 0 ? { tools: session.tools } : {}),
+    });
+  } else if (session.tools.length > 0) {
+    let assistantIndex = -1;
+    for (let index = turns.length - 1; index >= 0; index -= 1) {
+      if (turns[index]?.kind === "assistant") {
+        assistantIndex = index;
+        break;
+      }
+    }
+    if (assistantIndex >= 0) {
+      const assistant = turns[assistantIndex];
+      if (assistant?.kind === "assistant") {
+        turns[assistantIndex] = { ...assistant, tools: session.tools };
+      }
     } else {
-      turns.push({
-        kind: "assistant",
-        id: "live-assistant",
-        thought: session.thought,
-        answer: session.answer,
-        live: true,
-        tools: session.tools,
-      });
+      turns.push({ kind: "assistant", id: "tool-assistant", thought: "", answer: "", live: false, tools: session.tools });
     }
   }
 
