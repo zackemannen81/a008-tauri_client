@@ -1,6 +1,6 @@
 # Task ID Register
 
-Floor: ATC-0014
+Floor: ATC-0015
 
 | Task ID | Title | Owner | Claimed | Work |
 | --- | --- | --- | --- | --- |
@@ -17,3 +17,4 @@ Floor: ATC-0014
 | ATC-0011 | Group V2 tool activity and de-duplicate prompt errors | ChatGPT | 2026-09-16 | Complete |
 | ATC-0012 | Lift remaining GUI owner surfaces except Zero Cost Radar | Grok | 2026-09-21 | Complete |
 | ATC-0013 | Re-inventory current A008 GUI and refresh parity matrix | A008 | 2026-09-30 | Complete |
+| ATC-0014 | Close current A008 GUI parity gaps in Tauri client | A008 | 2026-09-30 | Ready |

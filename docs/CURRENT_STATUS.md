@@ -17,8 +17,9 @@ Reality as of 2026-09-30. This document records observed state, not intended arc
 
 ## Current Work
 
-`ATC-0011`, `ATC-0012` and `ATC-0013` are complete. No task is active. Next
-identity is `ATC-0014`.
+`ATC-0014` is Ready: close actionable GUI parity gaps in the Tauri client
+against a freshly verified, read-only A008 GUI/host reference. No implementation
+has started. Next identity is `ATC-0015`.
 
 ## Established limits
 

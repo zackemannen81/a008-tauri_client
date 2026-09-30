@@ -153,6 +153,24 @@ export interface ProjectListing {
   readonly projects: readonly ListedProject[];
 }
 
+export interface SidebarProject { readonly projectId: string; readonly name: string; readonly rootFolder?: string; readonly pinned?: boolean; readonly conversations: readonly { readonly conversationId: string; readonly title: string; readonly updatedAt: string; readonly current: boolean }[]; }
+export interface ProjectSidebarListing { readonly currentId: string | null; readonly projects: readonly SidebarProject[]; }
+
+function isRecord(value: unknown): value is Record<string, unknown> { return value !== null && typeof value === "object" && !Array.isArray(value); }
+export async function tryListSidebarProjects(httpBase: string, fetchImpl: typeof fetch = hostFetch): Promise<ProjectSidebarListing | undefined> {
+  try {
+    const response = await fetchImpl(joinUrl(httpBase, "/v1/projects/sidebar"), { ...SAME_ORIGIN, headers: { accept: "application/json" } });
+    if (!response.ok) return undefined;
+    const body = await readBody(response);
+    if (!isRecord(body) || !Array.isArray(body.projects)) return undefined;
+    const projects = body.projects.flatMap((entry) => {
+      if (!isRecord(entry) || typeof entry.projectId !== "string" || typeof entry.name !== "string") return [];
+      return [{ projectId: entry.projectId, name: entry.name, ...(typeof entry.rootFolder === "string" ? { rootFolder: entry.rootFolder } : {}), ...(typeof entry.pinned === "boolean" ? { pinned: entry.pinned } : {}), conversations: Array.isArray(entry.conversations) ? entry.conversations.flatMap((chat) => isRecord(chat) && typeof chat.conversationId === "string" && typeof chat.title === "string" ? [{ conversationId: chat.conversationId, title: chat.title, updatedAt: typeof chat.updatedAt === "string" ? chat.updatedAt : "", current: chat.current === true }] : []) : [] }];
+    });
+    return { currentId: typeof body.currentId === "string" ? body.currentId : null, projects };
+  } catch { return undefined; }
+}
+
 export type ListedModel = CatalogModel;
 
 export function parseProjectListing(body: unknown): ProjectListing {

@@ -4,7 +4,8 @@ import {
   type CodeArtifactView,
 } from "./artifact/code-artifact-panel.js";
 import type { HtmlArtifactCandidate } from "./artifact/code-artifact.js";
-import { BrandMark } from "./brand/brand-mark.js";
+import { APP_THEMES, type AppThemeId } from "./brand/theme.js";
+import { readStoredAppTheme, selectAppTheme } from "./brand/theme-storage.js";
 import { ChatPane } from "./chat/chat-pane.js";
 import { Composer } from "./chat/composer.js";
 import {
@@ -13,6 +14,8 @@ import {
   shortcutDockVisible,
   type EmptyShortcutId,
 } from "./chat/empty-shortcuts.js";
+import { ProjectSidebar } from "./pages/project-sidebar.js";
+import type { ReactNode } from "react";
 import { FilesPane, LIST_FILES_PROMPT, readFilePrompt } from "./files/files-pane.js";
 import { resolveHostEndpoints } from "./host/v2-http.js";
 import { persistConnection, readStoredConnection } from "./host/storage.js";
@@ -27,6 +30,9 @@ import { SettingsPane } from "./settings/settings-pane.js";
 import { ToolPermissionDialog } from "./session/tool-permission-dialog.js";
 import { useV2Session } from "./session/use-v2-session.js";
 import { EnvironmentPanel } from "./workbench/environment-panel.js";
+import { persistSidebarHidden, persistSidebarWidth, readSidebarHidden, readSidebarWidth } from "./brand/sidebar-state.js";
+import { SkillsPanel, type InstalledSkill } from "./settings/skills-panel.js";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 
 const STATUS_LABEL = {
   idle: "Not connected",
@@ -52,9 +58,16 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 export function App() {
   const session = useV2Session();
+  const [selectedSkill, setSelectedSkill] = useState<InstalledSkill>();
   const stored = readStoredConnection();
   const [page, setPage] = useState<Page>("chat");
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [sidebarHidden, setSidebarHidden] = useState(() => readSidebarHidden());
+  const [sidebarWidth, setSidebarWidth] = useState(() => readSidebarWidth());
+  const [projectSidebarOpen, setProjectSidebarOpen] = useState(true);
+  const [selectedConversationId, setSelectedConversationId] = useState("");
+  const [newChatRequest, setNewChatRequest] = useState(0);
+  const [menu, setMenu] = useState("");
   const [parametersOpen, setParametersOpen] = useState(false);
   const [host, setHost] = useState(stored?.host ?? "");
   const [projectId, setProjectId] = useState(stored?.projectId ?? "");
@@ -71,6 +84,18 @@ export function App() {
   const endpoints = useMemo(() => resolveHostEndpoints(host), [host]);
   const workspace = projectName || session.projectId || projectId;
   const panelOpen = toolsOpen || filesOpen || canvasOpen;
+
+  function resizeSidebar(width: number) {
+    const next = Math.max(208, Math.min(480, Math.round(width)));
+    setSidebarWidth(next); persistSidebarWidth(next);
+  }
+  function beginSidebarResize(event: ReactPointerEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const startX = event.clientX; const startWidth = sidebarWidth;
+    function move(pointer: PointerEvent) { resizeSidebar(startWidth + pointer.clientX - startX); }
+    function end() { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", end); }
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", end, { once: true });
+  }
 
   useEffect(() => {
     if (artifactSessionId.current === session.sessionId) return;
@@ -212,7 +237,8 @@ export function App() {
 
   return (
     <div
-      className={`a008-app a008-${page}-workspace${panelOpen ? " a008-panel-open" : ""}${navigationOpen ? " a008-navigation-open" : ""}`}
+      className={`a008-app a008-${page}-workspace${panelOpen ? " a008-panel-open" : ""}${navigationOpen ? " a008-navigation-open" : ""}${sidebarHidden ? " a008-sidebar-hidden" : ""}`}
+      style={{ "--a008-sidebar-width": `${sidebarWidth}px` } as CSSProperties}
     >
       <div className="a008-crt-overlay" aria-hidden="true" />
       <ToolPermissionDialog session={session} />
@@ -226,7 +252,7 @@ export function App() {
         <div className="a008-sidebar-brand">
           <BrandMark />
         </div>
-        <nav className="a008-sidebar-nav" aria-label="Workspace">
+        <nav className="a008-sidebar-nav" aria-label="Workspace" hidden={sidebarHidden}>
           <button type="button" aria-current={page === "chat" ? "page" : undefined} onClick={() => navigate("chat")}>
             <span aria-hidden="true">?</span> Chat
           </button>
@@ -256,7 +282,8 @@ export function App() {
           </button>
           <button type="button" aria-current={page === "platform" ? "page" : undefined} onClick={() => navigate("platform")}><span aria-hidden="true">â—«</span> Platform</button>
         </nav>
-        <div className="a008-sidebar-workspace">
+        {session.projectId ? <ProjectSidebar active={!sidebarHidden && projectSidebarOpen} selectedProjectId={session.projectId} selectedConversationId={selectedConversationId} onSelectProject={(id) => { setProjectId(id); setSelectedConversationId(""); setPage("platform"); }} onSelectConversation={(project, chat) => { setProjectId(project); setSelectedConversationId(chat); setPage("platform"); }} onNewChat={(id) => { setProjectId(id); setSelectedConversationId(""); setNewChatRequest((value) => value + 1); setPage("platform"); }} onNewProject={() => navigate("projects")} /> : null}
+        <div className="a008-sidebar-workspace" hidden={sidebarHidden}>
           <p className="a008-sidebar-caption">Workspace</p>
           <p className="a008-workspace-name" title={workspace}>
             {workspace || "No project bound"}
@@ -267,11 +294,11 @@ export function App() {
               : "Unlock with PIN, then choose a project."}
           </p>
         </div>
-        <details className="a008-runtime-details">
+        <details className="a008-runtime-details" hidden={sidebarHidden}>
           <summary>Runtime details</summary>
           <SettingsPane session={session} />
         </details>
-        <div className="a008-sidebar-footer">
+        <div className="a008-sidebar-footer" hidden={sidebarHidden}>
           <img
             className="a008-certified"
             src="/acme-engine-certified.png"
@@ -282,6 +309,7 @@ export function App() {
           <p>A008 ? Desktop 0.1</p>
         </div>
       </aside>
+      <div className="a008-sidebar-resizer" role="separator" aria-label="Resize sidebar" aria-orientation="vertical" aria-valuemin={208} aria-valuemax={480} aria-valuenow={sidebarWidth} tabIndex={0} onPointerDown={beginSidebarResize} onKeyDown={(event) => { if (event.key === "ArrowLeft") resizeSidebar(sidebarWidth - 16); else if (event.key === "ArrowRight") resizeSidebar(sidebarWidth + 16); else if (event.key === "Home") resizeSidebar(208); else if (event.key === "End") resizeSidebar(480); else return; event.preventDefault(); }} />
       <header className="a008-header">
         <div className="a008-header-title">
           <button
@@ -294,6 +322,7 @@ export function App() {
           >
             ?
           </button>
+          <button className="a008-sidebar-toggle" type="button" aria-label={sidebarHidden ? "Show sidebar" : "Hide sidebar"} aria-pressed={!sidebarHidden} onClick={() => { const hidden = !sidebarHidden; setSidebarHidden(hidden); setProjectSidebarOpen(!hidden); persistSidebarHidden(hidden); }}>{sidebarHidden ? "Show sidebar" : "Hide sidebar"}</button>
           <span>
             {page === "chat"
               ? "Conversation"
@@ -307,8 +336,11 @@ export function App() {
                       ? "Platform"
                       : "Tools"}
           </span>
-          <span className="a008-header-workspace">{workspace}</span>
+          <span className="a008-header-workspace" title={selectedConversationId ? `Conversation ${selectedConversationId}` : workspace}>{workspace}{selectedConversationId ? ` · ${selectedConversationId.slice(0, 12)}` : ""}</span>
         </div>
+        <nav className="a008-application-menu" aria-label="Application menu">
+          {([ ["file", "File", [["new-chat", "New chat"], ["files", "Files"]]], ["edit", "Edit", [["parameters", "Parameters"]]], ["view", "View", [["toggle-sidebar", sidebarHidden ? "Show sidebar" : "Hide sidebar"]]], ["help", "Help", [["help", "Help"]]] ] as const).map(([id, label, items]) => <div key={id} className="a008-menu-group"><button type="button" aria-haspopup="menu" aria-expanded={menu === id} onClick={() => setMenu(menu === id ? "" : id)}>{label}</button>{menu === id ? <div role="menu" className="a008-menu-popup">{items.map(([action, text]) => <button key={action} type="button" role="menuitem" onClick={() => { setMenu(""); if (action === "new-chat") { setNewChatRequest((value) => value + 1); setPage("platform"); } else if (action === "files") { setPage("chat"); setFilesOpen(true); } else if (action === "parameters") setParametersOpen(true); else if (action === "toggle-sidebar") { const hidden = !sidebarHidden; setSidebarHidden(hidden); setProjectSidebarOpen(!hidden); persistSidebarHidden(hidden); } else if (action === "help") setPage("help"); }}>{text}</button>)}</div> : null}</div>)}
+        </nav>
         <div className="a008-header-actions">
           <p className="a008-header-status">
             <span className={`a008-connection-dot a008-connection-${session.status}`} aria-hidden="true" />
@@ -378,6 +410,8 @@ export function App() {
               session={session}
               httpBase={endpoints.httpBase}
               onParameters={() => setParametersOpen(true)}
+              onSkillSelected={setSelectedSkill}
+              onImage={(prompt) => void ask(prompt)}
             />
           </>
         ) : (
@@ -406,7 +440,7 @@ export function App() {
         <HelpPage session={session} onChat={(prompt) => void ask(prompt)} />
       </main>
       <main className="a008-help-main" hidden={page !== "platform"}>
-        <PlatformPage active={page === "platform"} model={session.model} />
+        <PlatformPage active={page === "platform"} model={model} requestedProjectId={projectId} requestedConversationId={selectedConversationId} requestNewChat={newChatRequest} />
       </main>
       <main className="a008-help-main" hidden={page !== "projects"}>
         <ProjectsPage

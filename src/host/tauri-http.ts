@@ -10,6 +10,13 @@ export function defaultHttpBase(): string {
   return globalThis.location?.origin ?? "";
 }
 
+export function resolveHostUrl(path: string): string {
+  const base = defaultHttpBase();
+  if (base === "") return path;
+  const origin = base.replace(/\/$/u, "");
+  return path.startsWith(origin) ? path : `${origin}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 interface ProxyHttpResponse {
   readonly status: number;
   readonly headers: ReadonlyArray<readonly [string, string]>;
@@ -47,7 +54,7 @@ export const hostFetch: typeof fetch = async (input, init = {}) => {
   if (!isTauriRuntime()) {
     return fetch(input, init);
   }
-  const request = input instanceof Request ? input : new Request(input, init);
+  const request = input instanceof Request ? input : new Request(resolveHostUrl(String(input)), init);
   const body = request.method === "GET" || request.method === "HEAD" ? undefined : await request.text();
   const proxied = await tauriInvokeProxy({
     method: request.method,

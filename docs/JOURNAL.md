@@ -1,3 +1,10 @@
+## 2026-09-30 — ATC-0014 — Close current GUI parity gaps
+
+- Pulled origin/main fast-forward to 21f431e before creating the task; working tree was clean.
+- Set up ATC-0014 as Ready to implement the remaining material gaps in docs/GUI_PARITY.md against the current read-only C:\code\a008\gui reference.
+- Scope includes a fresh source/contract audit, supported GUI parity work, focused tests, and updated matrix/status/docs. Host source changes, Zero Cost Radar, credential/security boundary weakening, and unsupported claims of live parity are excluded.
+- Confirmed C:\code\a008 is present at revision 4ab38e5; no source modifications made.
+
 # Journal
 
 Newest first. Append only.
