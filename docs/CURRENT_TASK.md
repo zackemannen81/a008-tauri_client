@@ -10,4 +10,4 @@ Charter frozen at:
 
 ## Task Summary
 
-No active task. ATC-0011 and ATC-0012 are complete. Next identity is ATC-0013.
+No active task. ATC-0013 is complete and archived. Next identity is ATC-0014.
