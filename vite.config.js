@@ -14,6 +14,7 @@ export default defineConfig({
       '/auth': { target: A008_HOST, changeOrigin: true },
       '/v1': { target: A008_HOST, changeOrigin: true },
       '/v2': { target: A008_HOST, changeOrigin: true, ws: true },
+      '/v3': { target: A008_HOST, changeOrigin: true },
     },
   },
 });

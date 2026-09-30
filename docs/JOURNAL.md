@@ -117,3 +117,13 @@ Newest first. Append only.
 ## Bootstrap
 
 - Created by A008 project bootstrap.
+
+## 2026-09-26 — ATC-0013 — Complete GUI parity
+
+- Re-inventoried the current `C:\code\a008\gui` without modifying it.
+- Added V1 file browse/edit, project preview/bootstrap/register, Skills, Zero
+  Cost Radar, and Platform V3 surfaces through the existing Tauri loopback proxy.
+- V3 renders explicit unavailable state if its optional host backend is disabled.
+- Updated the parity matrix to classify every reference feature as Live, Local,
+  or evidenced Unavailable.
+- Verification: 45/45 tests, production frontend build and `git diff --check` pass.

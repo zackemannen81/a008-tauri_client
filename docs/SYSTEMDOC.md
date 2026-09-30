@@ -106,3 +106,12 @@ The A008 source repository at `C:\code\a008` remains a read-only reference.
 - `docs/adr/0003-gui-parity-before-stage-4.md` — transfer local/V2-stable GUI; do not emulate V1 global workspace.
 - `docs/adr/0004-owner-v1-http-for-gui-surfaces.md` — owner PIN client may use GUI V1 HTTP where V2 business routes are missing; skip Zero Cost Radar.
 - `docs/GUI_PARITY.md` — GUI feature matrix and missing V2 host rows.
+
+## ATC-0013 additions
+
+The desktop proxy also carries V1 file browsing/editing, project
+preview/bootstrap/register, Skills, Zero Cost Radar and Platform V3 HTTP. Vite
+proxies `/v3` as well. Platform V3 is conditional: `GET /v3/info` determines
+whether its backend is enabled before the renderer exposes conversations/runs.
+Its unavailable state performs no run request. File saves send the host-issued
+SHA-256 revision. `docs/GUI_PARITY.md` is the current exhaustive parity record.
